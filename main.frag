@@ -8,21 +8,6 @@ uniform vec3 color;
 //y : ↑
 //z : 奥
 
-//スクリーン座標 : (0,0,0)
-//目の座標 : (0,0,-1)
-//壁の座標 : (0,0,2)
-//光源座標 : (0,1,1)
-
-//壁の色 : (1,0,0,1)
-
-vec3 HitPos(vec3 origin,vec3 dist){
-  vec3 l;
-  vec3 p = vec3(0,0,2);//壁正面の点
-  vec3 n = vec3(0,0,-1);//壁の法線
-  float t = dot(p,n)/dot(dist,n) - dot(origin,n)/dot(dist,n);
-  l = origin + t * dist;
-  return l;
-}
 
 //球との当たり判定
 float HitShpere(vec3 o,vec3 d,vec3 p,float r){
@@ -56,11 +41,23 @@ void main(){
   float t = HitShpere(origin,dist,p,r);
   vec3 hit = origin + t*dist; //衝突位置
   vec3 n = hit-p; //法線
+
+  //拡散光
   float c = 0.5 * dot(light-hit,n);
   vec3 dif = vec3(c,0,0);
+
+  //光沢
+  float s = 0.008 * pow(
+  max(0.0,dot(reflect(hit-origin,n),light-hit)),
+  3.5);
+  vec3 spec = vec3(s,s,s);
+  if(t == -1.0)spec = vec3(0,0,0);
+
+
+  //環境光
   vec3 amb = vec3(0.1,0.1,0.1);
   if(t == -1.0)amb = vec3(0,0,0);
 
-  gl_FragColor = vec4(dif+amb,1);
+  gl_FragColor = vec4(dif+amb+spec,1);
 }
 
