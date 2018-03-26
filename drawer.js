@@ -1,5 +1,7 @@
+let po;
 export default class Drawer{
   static Init(){
+    po = true;
     let canvas = document.createElement("canvas");
     canvas.width = 512;
     canvas.height = 512;
@@ -30,22 +32,22 @@ export default class Drawer{
       this.gl.enableVertexAttribArray(0);
       this.gl.vertexAttribPointer(0,2,this.gl.FLOAT,false,0,0)
 
-      render();
+      if(po)render();
     });
 
     let t = 0;
     let render = ()=>{
-      requestAnimationFrame(render);
-      this.gl.clearColor(0,0,0,1);
-      this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-      let colorLocation = this.gl.getUniformLocation(program,"light");
-      let x = Math.sin(t/10);
-      let y = Math.sin(t/15);
-      this.gl.uniform3f(colorLocation,x,y,0);
-      this.gl.drawArrays(this.gl.TRIANGLES,0,3);
-      this.gl.drawArrays(this.gl.TRIANGLES,3,3);
-      this.gl.flush();
-      t++;
+        requestAnimationFrame(render);
+        this.gl.clearColor(0,0,0,1);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        let colorLocation = this.gl.getUniformLocation(program,"light");
+        let x = Math.sin(t/10);
+        let y = Math.sin(t/15);
+        this.gl.uniform3f(colorLocation,x,y,0);
+        this.gl.drawArrays(this.gl.TRIANGLES,0,3);
+        this.gl.drawArrays(this.gl.TRIANGLES,3,3);
+        this.gl.flush();
+        t++;
     }
   }
 
@@ -65,6 +67,7 @@ export default class Drawer{
         this.gl.compileShader(shader);
         if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
           console.log(this.gl.getShaderInfoLog(shader))
+          po = false;
         }
         res(shader);
       });

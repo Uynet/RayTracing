@@ -31,10 +31,8 @@ struct Intersect{
 //z : 奥
 
 //球との当たり判定
-Intersect HitShpere(vec3 o,vec3 d,Sphere s){
+Intersect HitShpere(vec3 o,vec3 d,vec3 p,float r){
   Intersect i;
-  vec3 p = s.pos;
-  float r = s.rad;
   float t;
   float a = dot(d,o-p);
   //判別式
@@ -86,7 +84,7 @@ void main(){
   sphere.pos = vec3(0,0,2);//球の中心点
   sphere.rad = 0.2;//半径
   sphere.color = vec3(1,1,0);
-  Intersect iS = HitShpere(origin,dist,sphere);
+  Intersect iS = HitShpere(origin,dist,sphere.pos,sphere.rad);
   vec3 n = iS.normal;
 
   //拡散光
