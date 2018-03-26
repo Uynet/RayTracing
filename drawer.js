@@ -43,7 +43,7 @@ export default class Drawer{
         let colorLocation = this.gl.getUniformLocation(program,"light");
         let x = Math.sin(t/10);
         let y = Math.sin(t/15);
-        this.gl.uniform3f(colorLocation,x,y,0);
+        this.gl.uniform3f(colorLocation,x,y,0.4);
         this.gl.drawArrays(this.gl.TRIANGLES,0,3);
         this.gl.drawArrays(this.gl.TRIANGLES,3,3);
         this.gl.flush();
