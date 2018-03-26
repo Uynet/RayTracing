@@ -45,7 +45,7 @@ Intersect HitShpere(vec3 o,vec3 d,Sphere s){
   vec3 hitPos = o + t*d; //衝突位置
   i.hitPos = hitPos;
   i.normal = hitPos-p; //法線
-  if(D < 0.0)t = -1.0;
+  if(D < 0.0)t = 114514.0;
   return i;
 }
 
@@ -57,8 +57,8 @@ Intersect HitPlane(vec3 o,vec3 d,Plane plane){
 
   t = dot(p,n)/dot(d,n) - dot(o,n)/dot(d,n);
   i.time = t;
-  i.hitPos = o + t*d;
   i.normal = n;
+  i.hitPos = o + t*d;
   i.color = plane.color;
   return i;
 }
@@ -72,14 +72,14 @@ vec3 Light(Intersect iS,vec3 origin){
   vec3 dif = iS.color * 0.5 * dot(light-iS.hitPos,iS.normal);
   
   //反射光
-  float s = 0.008 * pow(
-      max(0.0,dot(reflect(iS.hitPos-origin,iS.normal),light-iS.hitPos)),
+  float s = 0.8 * pow(
+      max(0.0,dot(reflect(normalize(iS.hitPos-origin),iS.normal),normalize(light-iS.hitPos))),
       3.5);
   vec3 spec = vec3(s,s,s);
-  if(iS.time == -1.0)spec = vec3(0,0,0);
+  if(iS.time == 114514.0)spec = vec3(0,0,0);
   //環境光
   vec3 amb = vec3(0.1,0.1,0.1);
-  if(iS.time == -1.0)amb = vec3(0,0,0);
+  if(iS.time == 114514.0)amb = vec3(0,0,0);
 
   return dif + amb + spec;
 }
@@ -102,10 +102,22 @@ void main(){
   Sphere sphere;
   sphere.pos = vec3(0,0,2);//球の中心点
   sphere.rad = 0.2;//半径
-  sphere.color = vec3(1,1,1);
+  sphere.color = vec3(0,1,1);
   Intersect iS = HitShpere(origin,dist,sphere);
 
-  vec3 pixelColor = Light(iS,origin);
+  //壁の情報
+  Plane plane1;
+  plane1.pos = vec3(0,0,4);
+  plane1.color = vec3(0,0,1);
+  plane1.normal = vec3(0,0,-1);
+  Intersect iS2 = HitPlane(origin,dist,plane1);
+
+    vec3 pixelColor;
+  if(iS.time < iS2.time) {
+    pixelColor = Light(iS,origin);
+  }else{
+    pixelColor = Light(iS2,origin);
+  }
 
   gl_FragColor = vec4(pixelColor,1);
 }
