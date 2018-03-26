@@ -1,0 +1,21 @@
+precision mediump float;
+varying vec2 vTextureCoord;
+uniform sampler2D uSampler;
+uniform vec3 color;
+
+vec3 HitPos(){
+  return vec3(1,1,1);
+}
+
+void main(){
+  //uv座標
+  float u = gl_FragCoord.x /512.0;
+  float v = gl_FragCoord.y /512.0;
+
+  float po = 1.41421356/2.0;
+  vec3 d = vec3(po*u,po*v,1);//distination
+
+  gl_FragColor = vec4(d,1);
+  
+}
+

@@ -1,8 +1,8 @@
 export default class Drawer{
   static Init(){
     let canvas = document.createElement("canvas");
-    canvas.width = 800;
-    canvas.height = 600;
+    canvas.width = 512;
+    canvas.height = 512;
     document.body.appendChild(canvas);
     this.gl = canvas.getContext("webgl");
     let vertexPositionBuffer = this.gl.createBuffer();
@@ -62,6 +62,9 @@ export default class Drawer{
         let code = xhr.responseText;
         this.gl.shaderSource(shader,code);
         this.gl.compileShader(shader);
+        if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+          console.log(this.gl.getShaderInfoLog(shader))
+        }
         res(shader);
       });
       xhr.send(null);
