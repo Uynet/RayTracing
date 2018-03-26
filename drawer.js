@@ -38,9 +38,10 @@ export default class Drawer{
       requestAnimationFrame(render);
       this.gl.clearColor(0,0,0,1);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-      let colorLocation = this.gl.getUniformLocation(program,"color");
-      let r = Math.sin(t/10);
-      this.gl.uniform3f(colorLocation,r,0,0);
+      let colorLocation = this.gl.getUniformLocation(program,"light");
+      let x = Math.sin(t/10);
+      let y = Math.sin(t/15);
+      this.gl.uniform3f(colorLocation,x,y,0);
       this.gl.drawArrays(this.gl.TRIANGLES,0,3);
       this.gl.drawArrays(this.gl.TRIANGLES,3,3);
       this.gl.flush();
