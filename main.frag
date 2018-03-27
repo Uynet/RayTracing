@@ -1,7 +1,7 @@
 precision mediump float;
 varying vec2 vTextureCoord;
 uniform sampler2D uSampler;
-uniform vec3 light;
+uniform vec3 poyo;
 
 
 struct Sphere{
@@ -69,6 +69,8 @@ float rand(vec2 p){
 }
 
 vec3 Light(Intersect iS,vec3 origin){
+  //光源座標
+  vec3 light = vec3(0.0,1,0.5);
   //拡散光
   vec3 dif = iS.color * max(0.0,
       dot(normalize(light-iS.hitPos),iS.normal));
@@ -91,62 +93,68 @@ void main(){
   float u = (gl_FragCoord.x - 256.0)/512.0;
   float v = (gl_FragCoord.y - 256.0)/512.0;
 
-  //光源座標
-  //vec3 light = vec3(1,1,0.5);
 
   //originとdist
-  vec3 origin = vec3(0,0,-1);
+  vec3 origin = vec3(0,0,-0.8);
   vec3 dist = normalize(vec3(0.8*u,0.8*v,1));//distination
   
   //球の情報
   Sphere sphere;
-  sphere.pos = vec3(light.x,0,2);//球の中心点
+  sphere.pos = vec3(poyo.x,0,2);//球の中心点
   sphere.rad = 0.2;//半径
   sphere.color = vec3(1,0,0);
   Intersect iS = HitShpere(origin,dist,sphere);
 
-  //壁の情報
-  Plane plane1;
-  plane1.pos = vec3(0,0,3);
-  plane1.color = vec3(0.7,0.7,0.5);
-  plane1.normal = vec3(0,0,-1);
-  Intersect iS2 = HitPlane(origin,dist,plane1);
-//←
-  Plane plane2;
-  plane2.pos = vec3(-0.9,0,0);
-  plane2.color = vec3(1,0,0);
-  plane2.normal = vec3(1,0,0);
-  Intersect iS3 = HitPlane(origin,dist,plane2);
-//下
-  Plane plane3;
-  plane3.pos = vec3(0,-1,0);
-  plane3.color = vec3(0.7,0.7,0.5);
-  plane3.normal = vec3(0,1,0);
-  Intersect iS4 = HitPlane(origin,dist,plane3);
-//→
-  Plane plane4;
-  plane4.pos = vec3(0.9,0,0);
-  plane4.color = vec3(0,1,0);
-  plane4.normal = vec3(-1,0,0);
-  Intersect iS5 = HitPlane(origin,dist,plane4);
-//↑
-  Plane plane5;
-  plane5.pos = vec3(0,1,0);
-  plane5.color = vec3(0.7,0.7,0.5);
-  plane5.normal = vec3(0,-1,0);
-  Intersect iS6 = HitPlane(origin,dist,plane5);
+  Plane planes[6];
 
-    vec3 pixelColor;
-    pixelColor = Light(iS,origin);
+  //壁の情報
+  planes[0].pos = vec3(0,0,3);
+  planes[0].color = vec3(0.7,0.7,0.5);
+  planes[0].normal = vec3(0,0,-1);
+//←
+  planes[1];
+  planes[1].pos = vec3(-1,0,0);
+  planes[1].color = vec3(1,0,0);
+  planes[1].normal = vec3(1,0,0);
+//下
+  planes[2];
+  planes[2].pos = vec3(0,-1,0);
+  planes[2].color = vec3(0.7,0.7,0.5);
+  planes[2].normal = vec3(0,1,0);
+//→
+  planes[3];
+  planes[3].pos = vec3(1,0,0);
+  planes[3].color = vec3(0,1,0);
+  planes[3].normal = vec3(-1,0,0);
+//↑
+  planes[4];
+  planes[4].pos = vec3(0,1,0);
+  planes[4].color = vec3(0.7,0.7,0.5);
+  planes[4].normal = vec3(0,-1,0);
+  //手前
+  planes[5];
+  planes[5].pos = vec3(0,0,-1);
+  planes[5].color = vec3(0.7,0.7,0.5);
+  planes[5].normal = vec3(0,0,1);
+
+    vec3 pixelColor = vec3(0,0,0);
     Intersect result;
     result.time = 114514.0;
-  if(iS.time < result.time ) result = iS;
-  if(iS2.time < result.time ) result = iS2;
-  if(iS3.time < result.time ) result = iS3;
-  if(iS4.time < result.time ) result = iS4;
-  if(iS5.time < result.time ) result = iS5;
-  if(iS6.time < result.time ) result = iS6;
-  pixelColor = Light(result,origin);
+
+    //反射
+    for(int x = 0;x<3;x++){
+      //全ての壁との当たり判定
+      for(int i = 0;i<6;i++){
+        Intersect iP = HitPlane(origin,dist,planes[i]);
+        if(iP.time < result.time) result = iP;
+      }
+      if(iS.time < result.time) result = iS;
+
+      dist = reflect(dist,result.normal);
+      origin = result.hitPos + 0.2*dist;
+
+      pixelColor += 0.3 * Light(result,origin);
+    }
 
   gl_FragColor = vec4(pixelColor,1);
 }
