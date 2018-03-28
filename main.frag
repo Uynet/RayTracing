@@ -3,7 +3,6 @@ varying vec2 vTextureCoord;
 uniform sampler2D uSampler;
 uniform vec3 poyo;
 
-
 struct Sphere{
   vec3 pos;//中心座標
   float rad;//半径
@@ -23,6 +22,8 @@ struct Intersect{
   vec3 normal;
   vec3 hitPos;//衝突位置
   vec3 color;
+  float ref;  
+  int shape;//0:sphere 1:plane
 }unko;
 
 //座標軸
@@ -45,6 +46,8 @@ Intersect HitShpere(vec3 o,vec3 d,Sphere s){
   vec3 hitPos = o + t*d; //衝突位置
   i.hitPos = hitPos;
   i.normal = normalize(hitPos-p); //法線
+  i.ref = 0.1;
+  i.shape = 0;
   if(D < 0.0)t = 114514.0;
   return i;
 }
@@ -61,11 +64,20 @@ Intersect HitPlane(vec3 o,vec3 d,Plane plane){
   i.normal = n;
   i.hitPos = o + t*d;
   i.color = plane.color;
+  i.ref = 0.3;
+  i.shape = 1;
   return i;
 }
 
 float rand(vec2 p){
   return fract(sin(dot(p ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+vec3 rand3d(vec2 p){
+  float v1 =  fract(sin(dot(p ,vec2(12.9898,78.233))) * 43758.5453);
+  float v2 =  fract(sin(dot(p-53.1 ,vec2(12.9898,78.233))) * 43758.5453);
+  float v3 =  fract(sin(dot(p+47.3 ,vec2(12.9898,78.233))) * 43758.5453);
+  return vec3(v1,v2,v3);
 }
 
 vec3 Light(Intersect iS,vec3 origin){
@@ -93,17 +105,19 @@ void main(){
   float u = (gl_FragCoord.x - 256.0)/512.0;
   float v = (gl_FragCoord.y - 256.0)/512.0;
 
-
   //originとdist
   vec3 origin = vec3(0,0,-0.8);
   vec3 dist = normalize(vec3(0.8*u,0.8*v,1));//distination
   
   //球の情報
-  Sphere sphere;
-  sphere.pos = vec3(poyo.x,0,2);//球の中心点
-  sphere.rad = 0.2;//半径
-  sphere.color = vec3(1,0,0);
-  Intersect iS = HitShpere(origin,dist,sphere);
+  Sphere spheres[2];
+  spheres[0].pos = vec3(poyo.x-0.3,poyo.y,poyo.z);//球の中心点
+  spheres[0].rad = 0.2;//半径
+  spheres[0].color = vec3(1,0.3,0.6);
+
+  spheres[1].pos = vec3(poyo.x+0.4,poyo.y-0.2,poyo.z+0.3);//球の中心点
+  spheres[1].rad = 0.07;//半径
+  spheres[1].color = vec3(0.4,1,1);
 
   Plane planes[6];
 
@@ -111,22 +125,22 @@ void main(){
   planes[0].pos = vec3(0,0,3);
   planes[0].color = vec3(0.7,0.7,0.5);
   planes[0].normal = vec3(0,0,-1);
-//←
+  //←
   planes[1];
   planes[1].pos = vec3(-1,0,0);
   planes[1].color = vec3(1,0,0);
   planes[1].normal = vec3(1,0,0);
-//下
+  //下
   planes[2];
   planes[2].pos = vec3(0,-1,0);
   planes[2].color = vec3(0.7,0.7,0.5);
   planes[2].normal = vec3(0,1,0);
-//→
+  //→
   planes[3];
   planes[3].pos = vec3(1,0,0);
   planes[3].color = vec3(0,1,0);
   planes[3].normal = vec3(-1,0,0);
-//↑
+  //↑
   planes[4];
   planes[4].pos = vec3(0,1,0);
   planes[4].color = vec3(0.7,0.7,0.5);
@@ -141,21 +155,51 @@ void main(){
     Intersect result;
     result.time = 114514.0;
 
+    const int reflectCount = 3;//反射回数
+    const int loop = 30;//反射回数
+
     //反射
-    for(int x = 0;x<3;x++){
-      //全ての壁との当たり判定
-      for(int i = 0;i<6;i++){
-        Intersect iP = HitPlane(origin,dist,planes[i]);
-        if(iP.time < result.time) result = iP;
+    vec3 finalColor = vec3(0,0,0);
+    for(int y = 0;y<loop;y++){
+      //平均取る
+      origin = vec3(0,0,-0.8);
+      pixelColor = vec3(0,0,0);
+      float str = 0.6;
+      for(int x = 0;x<reflectCount;x++){
+        result.time = 114514.0;
+        //全ての壁との当たり判定
+        for(int i = 0;i<6;i++){
+          Intersect iP = HitPlane(origin,dist,planes[i]);
+          if(iP.time < result.time) result = iP;
+        }
+        for(int i = 0;i<1;i++){
+          Intersect iS = HitShpere(origin,dist,spheres[i]);
+          if(iS.time < result.time) result = iS;
+        }
+        //反射
+        //球
+        vec2 p = vec2(u,v);
+        if(result.shape == 0){
+          if(rand(p) < 0.0) dist = reflect(dist,result.normal);
+          else dist = refract(dist,result.normal,0.8);
+          pixelColor += str * Light(result,origin);
+        }
+        //壁
+        if(result.shape == 1){
+          dist = reflect(dist,result.normal);
+          pixelColor += str * Light(result,origin);
+        }
+        //ここで乱数
+        dist += (rand3d(p)-0.5)/10000.0;
+        dist = normalize(dist);
+
+        origin = result.hitPos + 0.04*dist;
+
+        result.ref = 0.4;
+        str *= result.ref;
       }
-      if(iS.time < result.time) result = iS;
-
-      dist = reflect(dist,result.normal);
-      origin = result.hitPos + 0.2*dist;
-
-      pixelColor += 0.3 * Light(result,origin);
+      finalColor += pixelColor/30.0;
     }
-
-  gl_FragColor = vec4(pixelColor,1);
+    gl_FragColor = vec4(finalColor,1);
 }
 

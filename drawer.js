@@ -37,17 +37,22 @@ export default class Drawer{
 
     let t = 0;
     let render = ()=>{
+      if(po){
         requestAnimationFrame(render);
         this.gl.clearColor(0,0,0,1);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         let colorLocation = this.gl.getUniformLocation(program,"poyo");
-        let x = Math.sin(t/100);
-        let y = Math.sin(t/15);
-        this.gl.uniform3f(colorLocation,x,y,0.4);
+        let x = Math.sin(t/27);
+        let y = Math.sin(t/20);
+        let z = Math.sin(t/16);
+        y = -0.5;
+        this.gl.uniform3f(colorLocation,x,y,2 + z/4);
         this.gl.drawArrays(this.gl.TRIANGLES,0,3);
         this.gl.drawArrays(this.gl.TRIANGLES,3,3);
         this.gl.flush();
         t++;
+        po = false;
+        }
     }
   }
 
