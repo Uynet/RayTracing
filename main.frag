@@ -124,11 +124,11 @@ void main(){
   Sphere spheres[2];
   spheres[0].pos = vec3(poyo.x-0.3,poyo.y,poyo.z);//球の中心点
   spheres[0].rad = 0.2;//半径
-  spheres[0].color = vec3(1,1,1);
+  spheres[0].color = vec3(1,0.3,0.6);
 
   spheres[1].pos = vec3(poyo.x+0.4,poyo.y-0.2,poyo.z+0.3);//球の中心点
   spheres[1].rad = 0.07;//半径
-  spheres[1].color = vec3(0.5,0.5,0.5);
+  spheres[1].color = vec3(0.6,0.3,1);
 
   Plane planes[6];
 
@@ -177,7 +177,7 @@ void main(){
       dist = normalize(vec3(0.8*u,0.8*v,1));//distination
       origin = vec3(0,0,-0.8);
       pixelColor = vec3(0,0,0);
-      float str = 0.8;
+      float str = 0.5;
       for(int x = 0;x<reflectCount;x++){
         result.time = 114514.0;
         //全ての壁との当たり判定
@@ -193,16 +193,16 @@ void main(){
         //球
         vec2 p = vec2(u,v) + loop;
         if(result.shape == 0){
-          dist = refract(dist,result.normal,0.4);
-          //dist = reflect(dist,result.normal);
+          //dist = refract(dist,result.normal,0.4);
+          dist = reflect(dist,result.normal);
           pixelColor += str * Light(result,origin);
-          result.ref = 0.3;
+          result.ref = 0.5;
         }
         //壁
         if(result.shape == 1){
           dist = reflect(dist,result.normal);
           pixelColor += str * Light(result,origin);
-          result.ref = 0.3;
+          result.ref = 0.5;
         }
         //ここで乱数
         dist += (rand3d(p)-0.5)/100.0;
