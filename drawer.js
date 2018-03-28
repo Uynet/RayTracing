@@ -44,13 +44,13 @@ export default class Drawer{
         let colorLocation = this.gl.getUniformLocation(program,"poyo");
         let x = Math.sin(t/27);
         let y = Math.sin(t/20);
-        let z = Math.sin(t/16);
-        y = -0.5;
-        this.gl.uniform3f(colorLocation,x,y,2 + z/4);
+        y = -0.6;
+        this.gl.uniform3f(colorLocation,x,y,2.4);
         this.gl.drawArrays(this.gl.TRIANGLES,0,3);
         this.gl.drawArrays(this.gl.TRIANGLES,3,3);
         this.gl.flush();
         t++;
+        let loopLocation = this.gl.getUniformLocation(program,"loop");
         po = false;
         }
     }

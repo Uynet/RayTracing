@@ -24,7 +24,7 @@ struct Intersect{
   vec3 color;
   float ref;  
   int shape;//0:sphere 1:plane
-}unko;
+};
 
 //座標軸
 //x : →
@@ -67,6 +67,17 @@ Intersect HitPlane(vec3 o,vec3 d,Plane plane){
   i.ref = 0.3;
   i.shape = 1;
   return i;
+}
+
+int HitLight(vec3 p){
+  if(p.y >= 0.99 ){
+    if(p.x > -0.3 || p.x < 0.3){
+      if(p.z > -0.3 || p.z < 0.3){
+        return 1;
+      }
+    }
+  }
+  return 0;
 }
 
 float rand(vec2 p){
@@ -113,11 +124,11 @@ void main(){
   Sphere spheres[2];
   spheres[0].pos = vec3(poyo.x-0.3,poyo.y,poyo.z);//球の中心点
   spheres[0].rad = 0.2;//半径
-  spheres[0].color = vec3(1,0.3,0.6);
+  spheres[0].color = vec3(1,1,1);
 
   spheres[1].pos = vec3(poyo.x+0.4,poyo.y-0.2,poyo.z+0.3);//球の中心点
   spheres[1].rad = 0.07;//半径
-  spheres[1].color = vec3(0.4,1,1);
+  spheres[1].color = vec3(0.5,0.5,0.5);
 
   Plane planes[6];
 
@@ -155,16 +166,18 @@ void main(){
     Intersect result;
     result.time = 114514.0;
 
-    const int reflectCount = 3;//反射回数
-    const int loop = 30;//反射回数
+    const int reflectCount = 30;//反射回数
+    const float loop = 10.0;
 
     //反射
     vec3 finalColor = vec3(0,0,0);
-    for(int y = 0;y<loop;y++){
+    for(float y = 0.0;y<loop;y+=1.0){
       //平均取る
+      //初期化
+      dist = normalize(vec3(0.8*u,0.8*v,1));//distination
       origin = vec3(0,0,-0.8);
       pixelColor = vec3(0,0,0);
-      float str = 0.6;
+      float str = 0.8;
       for(int x = 0;x<reflectCount;x++){
         result.time = 114514.0;
         //全ての壁との当たり判定
@@ -172,34 +185,36 @@ void main(){
           Intersect iP = HitPlane(origin,dist,planes[i]);
           if(iP.time < result.time) result = iP;
         }
-        for(int i = 0;i<1;i++){
+        for(int i = 0;i<2;i++){
           Intersect iS = HitShpere(origin,dist,spheres[i]);
           if(iS.time < result.time) result = iS;
         }
         //反射
         //球
-        vec2 p = vec2(u,v);
+        vec2 p = vec2(u,v) + loop;
         if(result.shape == 0){
-          if(rand(p) < 0.0) dist = reflect(dist,result.normal);
-          else dist = refract(dist,result.normal,0.8);
+          dist = refract(dist,result.normal,0.4);
+          //dist = reflect(dist,result.normal);
           pixelColor += str * Light(result,origin);
+          result.ref = 0.3;
         }
         //壁
         if(result.shape == 1){
           dist = reflect(dist,result.normal);
           pixelColor += str * Light(result,origin);
+          result.ref = 0.3;
         }
         //ここで乱数
-        dist += (rand3d(p)-0.5)/10000.0;
+        dist += (rand3d(p)-0.5)/100.0;
         dist = normalize(dist);
-
+        if(HitLight(origin) == 1)break;
         origin = result.hitPos + 0.04*dist;
 
-        result.ref = 0.4;
         str *= result.ref;
       }
-      finalColor += pixelColor/30.0;
+      finalColor += pixelColor;
     }
+      finalColor /= loop;
     gl_FragColor = vec4(finalColor,1);
 }
 
