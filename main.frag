@@ -3,6 +3,10 @@ varying vec2 vTextureCoord;
 uniform sampler2D uSampler;
 uniform vec3 poyo;
 
+float rand(vec2 p){
+  return fract(sin(dot(p ,vec2(12.9898,78.233))) * 43758.5453);
+}
+
 struct Sphere{
   vec3 pos;//中心座標
   float rad;//半径
@@ -37,10 +41,14 @@ Intersect HitShpere(vec3 o,vec3 d,Sphere s){
   vec3 p = s.pos;
   float r = s.rad;
   float t;
-  float a = dot(d,o-p);
+  float b = dot(d,o-p);
   //判別式
-  float D = a*a - length(o-p)*length(o-p)+r;
-  t = -a -sqrt(D);
+  float D = b*b - length(o-p)*length(o-p)+r;
+  if(D < 0.0)t = 114514.0;
+  if(-b -sqrt(D) > 0.0)t = -b-sqrt(D);
+  else if(-b +sqrt(D) > 0.0)t = -b+sqrt(D);
+  else t = 114514.0;
+
   i.time = t;
   i.color = s.color;
   vec3 hitPos = o + t*d; //衝突位置
@@ -48,7 +56,6 @@ Intersect HitShpere(vec3 o,vec3 d,Sphere s){
   i.normal = normalize(hitPos-p); //法線
   i.ref = 0.1;
   i.shape = 0;
-  if(D < 0.0)t = 114514.0;
   return i;
 }
 
@@ -85,9 +92,6 @@ int HitLight(vec3 p){
   return 0;
 }
 
-float rand(vec2 p){
-  return fract(sin(dot(p ,vec2(12.9898,78.233))) * 43758.5453);
-}
 
 vec3 rand3d(vec2 p){
   float v1 =  fract(sin(dot(p ,vec2(12.9898,78.233))) * 43758.5453);
@@ -126,15 +130,18 @@ void main(){
   vec3 dist = normalize(vec3(0.8*u,0.8*v,1));//distination
   
   //球の情報
-  Sphere spheres[2];
+  Sphere spheres[3];
   spheres[0].pos = vec3(poyo.x-0.3,poyo.y,poyo.z);//球の中心点
-  spheres[0].rad = 0.2;//半径
+  spheres[0].rad = 0.15;//半径
   spheres[0].color = vec3(1,0.3,0.6);
 
-  spheres[1].pos = vec3(poyo.x+0.4,poyo.y-0.2,poyo.z+0.3);//球の中心点
+  spheres[1].pos = vec3(poyo.x+0.4,poyo.y-0.2,poyo.z+0.4);//球の中心点
   spheres[1].rad = 0.07;//半径
   spheres[1].color = vec3(0.6,0.3,1);
 
+  spheres[2].pos = vec3(poyo.x+0.2,poyo.y-0.2,poyo.z-0.4);//球の中心点
+  spheres[2].rad = 0.05;//半径
+  spheres[2].color = vec3(0.3,0.6,1);
   Plane planes[6];
 
   //壁の情報
@@ -174,15 +181,16 @@ void main(){
     const int reflectCount = 30;//反射回数
     const float loop = 1.0;
 
+    int mat = 1;//
+
     //反射
     vec3 finalColor = vec3(0,0,0);
     for(float y = 0.0;y<loop;y+=1.0){
       //平均取る
       //初期化
-      //dist = normalize(vec3(0.8*u,0.8*v,1));//distination
-      
-      //origin = vec3(0,0,-0.8);
       pixelColor = vec3(0,0,0);
+      dist = normalize(vec3(0.8*u,0.8*v,1));//distination
+      origin = vec3(0,0,-0.8);
       float str = 0.5;
       for(int x = 0;x<reflectCount;x++){
         result.time = 114514.0;
@@ -191,7 +199,7 @@ void main(){
           Intersect iP = HitPlane(origin,dist,planes[i]);
           if(iP.time < result.time) result = iP;
         }
-        for(int i = 0;i<2;i++){
+        for(int i = 0;i<3;i++){
           Intersect iS = HitShpere(origin,dist,spheres[i]);
           if(iS.time < result.time) result = iS;
         }
@@ -199,23 +207,29 @@ void main(){
         //球
         vec2 p = vec2(u,v) + loop;
         if(result.shape == 0){
-          //dist = refract(dist,result.normal,0.4);
-          dist = reflect(dist,result.normal);
-          pixelColor += str * Light(result,origin);
-          result.ref = 0.5;
+          vec3 nor = result.normal;
+          vec3 unko = dist;
+          if (dot(dist, nor)>0.0)nor = -nor;
+          if(mat == 1) dist = refract(dist,nor,1.2);
+          if(mat == 0) dist = refract(dist,nor,1.0/1.2);
+          if(length(dist) < 0.1 ) dist = reflect(unko,nor);
+          mat = 0;
+          //dist = reflect(dist,result.normal);
+          //pixelColor += str * Light(result,origin);
+          result.ref = 1.0;
         }
         //壁
         if(result.shape == 1){
+          mat = 1;
           dist = reflect(dist,result.normal);
           pixelColor += str * Light(result,origin);
           result.ref = 0.5;
         }
         //ここで乱数
-        //dist += (rand3d(p)-0.5)/100.0;
+        //dist += (rand3d(p+loop)-0.5)/100.0;
         dist = normalize(dist);
         if(HitLight(origin) == 1)break;
-        origin = result.hitPos + 0.04*dist;
-
+        origin = result.hitPos + 0.003*dist;
         str *= result.ref;
       }
       finalColor += pixelColor;
