@@ -64,6 +64,11 @@ Intersect HitPlane(vec3 o,vec3 d,Plane plane){
   i.normal = n;
   i.hitPos = o + t*d;
   i.color = plane.color;
+  if(i.hitPos.y <= -0.99){
+    if( (mod(i.hitPos.x,0.5)-0.25) *(mod(i.hitPos.z,0.5)-0.25)<0.0) {
+      i.color = vec3(0.0,0.0,0.0);
+    }
+  }
   i.ref = 0.3;
   i.shape = 1;
   return i;
@@ -167,15 +172,16 @@ void main(){
     result.time = 114514.0;
 
     const int reflectCount = 30;//反射回数
-    const float loop = 10.0;
+    const float loop = 1.0;
 
     //反射
     vec3 finalColor = vec3(0,0,0);
     for(float y = 0.0;y<loop;y+=1.0){
       //平均取る
       //初期化
-      dist = normalize(vec3(0.8*u,0.8*v,1));//distination
-      origin = vec3(0,0,-0.8);
+      //dist = normalize(vec3(0.8*u,0.8*v,1));//distination
+      
+      //origin = vec3(0,0,-0.8);
       pixelColor = vec3(0,0,0);
       float str = 0.5;
       for(int x = 0;x<reflectCount;x++){
@@ -205,7 +211,7 @@ void main(){
           result.ref = 0.5;
         }
         //ここで乱数
-        dist += (rand3d(p)-0.5)/100.0;
+        //dist += (rand3d(p)-0.5)/100.0;
         dist = normalize(dist);
         if(HitLight(origin) == 1)break;
         origin = result.hitPos + 0.04*dist;
